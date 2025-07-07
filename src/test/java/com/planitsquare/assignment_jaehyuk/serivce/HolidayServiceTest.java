@@ -1,6 +1,7 @@
 package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -127,5 +132,109 @@ class HolidayServiceTest {
         List<Holiday> savedHolidays = captor.getValue();
         assertEquals(1, savedHolidays.size());
         assertEquals("삼일절", savedHolidays.get(0).getLocalName());
+    }
+
+    @Test
+    @DisplayName("국가코드와 연도로 공휴일 검색 - 정상 케이스")
+    void searchHolidayList_WithValidParams_ShouldReturnPagedResults() {
+        // given
+        String countryCode = "KR";
+        int year = 2024;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Holiday testHoliday = new Holiday(
+                "KR",
+                "Korea",
+                LocalDate.of(2024, 1, 1),
+                "신정",
+                "New Year's Day",
+                true,
+                true,
+                1949,
+                "Public",
+                null
+        );
+        testHoliday.setId(1L); // 테스트용 ID 설정
+
+        List<Holiday> holidayList = Arrays.asList(testHoliday);
+        Page<Holiday> holidayPage = new PageImpl<>(holidayList, pageable, 1);
+
+        when(holidayRepository.findByCountryCodeAndDateBetween(
+                eq(countryCode),
+                eq(LocalDate.of(year, 1, 1)),
+                eq(LocalDate.of(year, 12, 31)),
+                eq(pageable)
+        )).thenReturn(holidayPage);
+
+        // when
+        Page<HolidayResponse> result = holidayService.searchHolidayList(countryCode, year, pageable);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().size());
+
+        HolidayResponse response = result.getContent().get(0);
+        assertEquals(1L, response.getId());
+        assertEquals("KR", response.getCountryCode());
+        assertEquals("Korea", response.getCountryName());
+        assertEquals("신정", response.getLocalName());
+        assertEquals("New Year's Day", response.getName());
+        assertEquals(LocalDate.of(2024, 1, 1), response.getDate());
+    }
+
+    @Test
+    @DisplayName("검색 결과가 없는 경우 빈 페이지 반환")
+    void searchHolidayList_WithNoResults_ShouldReturnEmptyPage() {
+        // given
+        String countryCode = "US";
+        int year = 2025;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<Holiday> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(holidayRepository.findByCountryCodeAndDateBetween(
+                eq(countryCode),
+                eq(LocalDate.of(year, 1, 1)),
+                eq(LocalDate.of(year, 12, 31)),
+                eq(pageable)
+        )).thenReturn(emptyPage);
+
+        // when
+        Page<HolidayResponse> result = holidayService.searchHolidayList(countryCode, year, pageable);
+
+        // then
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        assertTrue(result.getContent().isEmpty());
+    }
+
+    @Test
+    @DisplayName("페이징이 올바르게 동작하는지 검증")
+    void searchHolidayList_WithPaging_ShouldRespectPageable() {
+        // given
+        String countryCode = "KR";
+        int year = 2024;
+        Pageable pageable = PageRequest.of(1, 5); // 두번째 페이지, 5개씩
+
+        Page<Holiday> holidayPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(holidayRepository.findByCountryCodeAndDateBetween(
+                anyString(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(pageable)
+        )).thenReturn(holidayPage);
+
+        // when
+        holidayService.searchHolidayList(countryCode, year, pageable);
+
+        // then
+        verify(holidayRepository).findByCountryCodeAndDateBetween(
+                eq(countryCode),
+                eq(LocalDate.of(year, 1, 1)),
+                eq(LocalDate.of(year, 12, 31)),
+                eq(pageable)
+        );
     }
 }
