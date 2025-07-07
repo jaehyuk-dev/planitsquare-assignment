@@ -1,4 +1,4 @@
-package com.planitsquare.assignment_jaehyuk.dto;
+package com.planitsquare.assignment_jaehyuk.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

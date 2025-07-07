@@ -1,6 +1,6 @@
 package com.planitsquare.assignment_jaehyuk.serivce;
 
-import com.planitsquare.assignment_jaehyuk.dto.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import org.junit.jupiter.api.BeforeEach;

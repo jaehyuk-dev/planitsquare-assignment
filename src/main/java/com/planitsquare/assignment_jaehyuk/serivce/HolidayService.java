@@ -1,11 +1,15 @@
 package com.planitsquare.assignment_jaehyuk.serivce;
 
-import com.planitsquare.assignment_jaehyuk.dto.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
+import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,5 +67,50 @@ public class HolidayService {
                 StringArrayUtils.joinFromList(dto.getTypes()),
                 StringArrayUtils.joinFromList(dto.getCounties())
         );
+    }
+
+
+    /**
+     * 기본 검색
+     * @param countryCode
+     * @param year
+     * @param pageable
+     * @return
+     */
+    public Page<HolidayResponse> searchHolidayList(String countryCode, int year, Pageable pageable) {
+        Page<Holiday> holidayPage = holidayRepository.findByCountryCodeAndDateBetween(
+                countryCode,
+                LocalDate.of(year, 1, 1),
+                LocalDate.of(year, 12, 31),
+                pageable
+        );
+
+        return holidayPage.map(holiday ->
+                HolidayResponse.builder()
+                        .id(holiday.getId())
+                        .countryCode(holiday.getCountryCode())
+                        .countryName(holiday.getCountryName())
+                        .date(holiday.getDate())
+                        .localName(holiday.getLocalName())
+                        .name(holiday.getName())
+                        .build()
+        );
+    }
+
+    /**
+     * 고급 검색
+     * @return
+     */
+    public Page<HolidayResponse> searchHolidayListWithSearchCondition() {
+        return Page.empty();
+    }
+
+    /**
+     * 공휴일 상세검색
+     * @param id
+     * @return
+     */
+    public HolidayDetailResponse searchHolidayDetail(Long id){
+        return null;
     }
 }

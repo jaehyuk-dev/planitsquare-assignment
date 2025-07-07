@@ -2,8 +2,8 @@ package com.planitsquare.assignment_jaehyuk.initializer;
 
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
-import com.planitsquare.assignment_jaehyuk.dto.CountryDto;
-import com.planitsquare.assignment_jaehyuk.dto.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.external.CountryDto;
+import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
 import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
