@@ -1,5 +1,6 @@
 package com.planitsquare.assignment_jaehyuk.dto.response;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -20,6 +21,7 @@ public class HolidayResponse {
     private String name;
 
     @Builder
+    @QueryProjection
     public HolidayResponse(Long id, String countryCode, String countryName, LocalDate date, String localName, String name) {
         this.id = id;
         this.countryCode = countryCode;

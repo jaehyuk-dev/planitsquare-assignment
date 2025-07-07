@@ -39,7 +39,6 @@ public class HolidayDetailResponse {
 
     @Builder
     @QueryProjection
-
     public HolidayDetailResponse(Long id, String countryCode, String countryName, LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, List<String> types, List<String> counties, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.countryCode = countryCode;

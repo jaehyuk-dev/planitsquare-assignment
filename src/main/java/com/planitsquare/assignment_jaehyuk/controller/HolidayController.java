@@ -1,8 +1,10 @@
 package com.planitsquare.assignment_jaehyuk.controller;
 
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,5 +50,20 @@ public class HolidayController {
         log.info("공휴일 상세 검색 요청 - id: {}", id);
 
         return ResponseEntity.ok(holidayService.searchHolidayDetail(id));
+    }
+
+    /**
+     * 공휴일 데이터 새로고침 API
+     * @param updateForm 새로고침 요청 데이터
+     * @return 새로고침 결과
+     */
+    @PutMapping("/refresh")
+    public ResponseEntity<String> refreshHolidayData(
+            @RequestBody @Valid HolidayUpdateForm updateForm) {
+
+        log.info("공휴일 데이터 새로고침 요청 - 국가: {}, 연도: {}", updateForm.getCountryCode(), updateForm.getYear());
+        holidayService.updateHolidayList(updateForm);
+
+        return ResponseEntity.ok("success");
     }
 }

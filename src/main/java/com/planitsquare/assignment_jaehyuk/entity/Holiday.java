@@ -73,4 +73,16 @@ public class Holiday {
         this.types = types;
         this.counties = counties;
     }
+
+    public void updateHoliday(LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, String types, String counties, LocalDateTime createdAt) {
+        this.date = date;
+        this.localName = localName;
+        this.name = name;
+        this.fixed = fixed;
+        this.global = global;
+        this.launchYear = launchYear;
+        this.types = types;
+        this.counties = counties;
+        this.createdAt = createdAt;
+    }
 }
