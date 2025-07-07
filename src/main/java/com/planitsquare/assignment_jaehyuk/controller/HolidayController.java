@@ -1,5 +1,6 @@
 package com.planitsquare.assignment_jaehyuk.controller;
 
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
@@ -65,5 +66,21 @@ public class HolidayController {
         holidayService.updateHolidayList(updateForm);
 
         return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 공휴일 고급 검색 API
+     * @param searchCondition 검색조건
+     * @param pageable 페이징 정보 (page, size, sort)
+     * @return
+     */
+    @GetMapping("/")
+    public ResponseEntity<Page<HolidayResponse>> searchHolidayList(
+            @Valid HolidaySearchCondition searchCondition,
+            @PageableDefault(size = 10, sort = "date") Pageable pageable) {
+
+        log.info("공휴일 고급 검색 요청");
+
+        return ResponseEntity.ok(holidayService.searchHolidayListWithSearchCondition(searchCondition, pageable));
     }
 }

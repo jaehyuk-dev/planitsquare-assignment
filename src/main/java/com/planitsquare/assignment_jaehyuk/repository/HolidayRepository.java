@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface HolidayRepository extends JpaRepository<Holiday, Long> {
+public interface HolidayRepository extends JpaRepository<Holiday, Long>, HolidayRepositoryCustom {
     boolean existsByCountryCodeAndDate(String countryCode, LocalDate date);
 
     Page<Holiday> findByCountryCodeAndDateBetween(String countryCode, LocalDate dateAfter, LocalDate dateBefore, Pageable pageable);

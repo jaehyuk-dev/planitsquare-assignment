@@ -2,6 +2,7 @@ package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
@@ -109,9 +110,10 @@ public class HolidayService {
      * 고급 검색
      * @return
      */
-    public Page<HolidayResponse> searchHolidayListWithSearchCondition() {
-        return Page.empty();
+    public Page<HolidayResponse> searchHolidayListWithSearchCondition(HolidaySearchCondition searchCondition, Pageable pageable) {
+        return holidayRepository.searchHolidayListWithSearchCondition(searchCondition, pageable);
     }
+
 
     /**
      * 공휴일 상세검색
