@@ -9,6 +9,7 @@ import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
+import com.planitsquare.assignment_jaehyuk.util.DateUtils;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -90,8 +91,8 @@ public class HolidayService {
     public Page<HolidayResponse> searchHolidayList(String countryCode, int year, Pageable pageable) {
         Page<Holiday> holidayPage = holidayRepository.findByCountryCodeAndDateBetween(
                 countryCode,
-                LocalDate.of(year, 1, 1),
-                LocalDate.of(year, 12, 31),
+                DateUtils.getYearStartDate(year),
+                DateUtils.getYearEndDate(year),
                 pageable
         );
 
@@ -146,9 +147,8 @@ public class HolidayService {
 
     @Transactional
     public void updateHolidayList(HolidayUpdateForm updateForm) {
-        LocalDate startDate = LocalDate.of(updateForm.getYear(), 1, 1);
-        LocalDate endDate = LocalDate.of(updateForm.getYear(), 12, 31);
-        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(updateForm.getCountryCode(), updateForm.getCountryName(), startDate, endDate);
+        DateUtils.DateRange yearRange = DateUtils.getYearRange(2024);
+        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(updateForm.getCountryCode(), updateForm.getCountryName(), yearRange.startDate(), yearRange.endDate());
 
         List<HolidayDto> latestHolidayList = nagerDateApiClient.getPublicHolidays(updateForm.getCountryCode(), updateForm.getYear());
 
@@ -204,9 +204,8 @@ public class HolidayService {
 
     @Transactional
     public void deleteHoliday(HolidayDeleteForm deleteForm) {
-        LocalDate startDate = LocalDate.of(deleteForm.getYear(), 1, 1);
-        LocalDate endDate = LocalDate.of(deleteForm.getYear(), 12, 31);
-        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(deleteForm.getCountryCode(), deleteForm.getCountryName(), startDate, endDate);
+        DateUtils.DateRange yearRange = DateUtils.getYearRange(2024);
+        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(deleteForm.getCountryCode(), deleteForm.getCountryName(), yearRange.startDate(), yearRange.endDate());
 
         holidayRepository.deleteAllInBatch(existingHolidaysList);
     }
