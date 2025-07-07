@@ -1,5 +1,6 @@
 package com.planitsquare.assignment_jaehyuk.controller;
 
+import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class HolidayController {
      * @return 페이징된 공휴일 목록
      */
     @GetMapping("/{countryCode}/{year}")
-    public ResponseEntity<Page<HolidayResponse>> searchHolidays(
+    public ResponseEntity<Page<HolidayResponse>> searchHolidayList(
             @PathVariable String countryCode,
             @PathVariable int year,
             @PageableDefault(size = 10, sort = "date") Pageable pageable) {
@@ -34,5 +35,18 @@ public class HolidayController {
         log.info("공휴일 기본 검색 요청 - 국가: {}, 연도: {}, 페이지: {}", countryCode, year, pageable.getPageNumber());
 
         return ResponseEntity.ok(holidayService.searchHolidayList(countryCode, year, pageable));
+    }
+
+    /**
+     * 공휴일 상세 검색
+     * @param id 공휴일 id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<HolidayDetailResponse> searchHolidayDetail(@PathVariable Long id) {
+
+        log.info("공휴일 상세 검색 요청 - id: {}", id);
+
+        return ResponseEntity.ok(holidayService.searchHolidayDetail(id));
     }
 }

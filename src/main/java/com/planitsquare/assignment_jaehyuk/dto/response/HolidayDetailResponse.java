@@ -1,10 +1,12 @@
 package com.planitsquare.assignment_jaehyuk.dto.response;
 
 import com.querydsl.core.annotations.QueryProjection;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 public class HolidayDetailResponse {
@@ -27,16 +29,18 @@ public class HolidayDetailResponse {
 
     private Integer launchYear;
 
-    private String types;
+    private List<String> types;
 
-    private String counties;
+    private List<String> counties;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
+    @Builder
     @QueryProjection
-    public HolidayDetailResponse(Long id, String countryCode, String countryName, LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, String types, String counties, LocalDateTime createdAt, LocalDateTime updatedAt) {
+
+    public HolidayDetailResponse(Long id, String countryCode, String countryName, LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, List<String> types, List<String> counties, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.countryCode = countryCode;
         this.countryName = countryName;

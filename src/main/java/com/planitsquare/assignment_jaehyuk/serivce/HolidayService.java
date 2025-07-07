@@ -6,6 +6,7 @@ import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -111,6 +112,24 @@ public class HolidayService {
      * @return
      */
     public HolidayDetailResponse searchHolidayDetail(Long id){
-        return null;
+        Holiday holiday = holidayRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("공휴일 Id : {}를 찾을 수 없습니다.")
+        );
+
+        return HolidayDetailResponse.builder()
+                .id(holiday.getId())
+                .countryCode(holiday.getCountryCode())
+                .countryName(holiday.getCountryName())
+                .date(holiday.getDate())
+                .localName(holiday.getLocalName())
+                .name(holiday.getName())
+                .fixed(holiday.getFixed())
+                .global(holiday.getGlobal())
+                .launchYear(holiday.getLaunchYear())
+                .types(StringArrayUtils.splitToList(holiday.getTypes()))
+                .counties(StringArrayUtils.splitToList(holiday.getCounties()))
+                .createdAt(holiday.getCreatedAt())
+                .updatedAt(holiday.getUpdatedAt())
+                .build();
     }
 }
