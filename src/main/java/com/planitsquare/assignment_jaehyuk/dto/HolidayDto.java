@@ -1,6 +1,7 @@
 package com.planitsquare.assignment_jaehyuk.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,4 +38,17 @@ public class HolidayDto {
 
     @JsonProperty("types")
     private List<String> types;
+
+    @Builder
+    public HolidayDto(LocalDate date, String localName, String name, String countryCode, Boolean fixed, Boolean global, List<String> counties, Integer launchYear, List<String> types) {
+        this.date = date;
+        this.localName = localName;
+        this.name = name;
+        this.countryCode = countryCode;
+        this.fixed = fixed;
+        this.global = global;
+        this.counties = counties;
+        this.launchYear = launchYear;
+        this.types = types;
+    }
 }

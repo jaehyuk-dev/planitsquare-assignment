@@ -46,3 +46,8 @@ external:
     nager:
       base-url: https://date.nager.at/api/v3
       max-in-memory-size: 1048576  # 1MB (1024 * 1024)
+
+holiday:
+  data-initialization:
+    start-year: 2020
+    end-year: 2025

@@ -1,0 +1,74 @@
+package com.planitsquare.assignment_jaehyuk.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "holiday")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Holiday {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "country_code", nullable = false, length = 2)
+    private String countryCode;
+
+    @Column(name = "country_name", nullable = false)
+    private String countryName;
+
+    @Column(nullable = false)
+    private LocalDate date;
+
+    @Column(name = "local_name")
+    private String localName;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(name = "is_fixed")
+    private Boolean fixed;
+
+    @Column(name = "is_global")
+    private Boolean global;
+
+    @Column(name = "launch_year")
+    private Integer launchYear;
+
+    @Column(columnDefinition = "TEXT")
+    private String types;
+
+    @Column(columnDefinition = "TEXT")
+    private String counties;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    public Holiday(String countryCode, String countryName, LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, String types, String counties) {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.date = date;
+        this.localName = localName;
+        this.name = name;
+        this.fixed = fixed;
+        this.global = global;
+        this.launchYear = launchYear;
+        this.types = types;
+        this.counties = counties;
+    }
+}
