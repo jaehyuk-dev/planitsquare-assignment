@@ -1,6 +1,7 @@
 package com.planitsquare.assignment_jaehyuk.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,6 +60,7 @@ public class Holiday {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Builder
     public Holiday(String countryCode, String countryName, LocalDate date, String localName, String name, Boolean fixed, Boolean global, Integer launchYear, String types, String counties) {
         this.countryCode = countryCode;
         this.countryName = countryName;
