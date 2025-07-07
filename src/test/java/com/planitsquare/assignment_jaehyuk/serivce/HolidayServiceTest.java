@@ -2,6 +2,7 @@ package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
@@ -513,5 +514,76 @@ class HolidayServiceTest {
         // then
         verify(holidayRepository).deleteAllByIdInBatch(Arrays.asList(1L));
         verify(holidayRepository, never()).save(any(Holiday.class));
+    }
+
+    @Test
+    @DisplayName("고급 검색 - 검색 조건에 맞는 데이터 반환 성공")
+    void searchHolidayListWithSearchCondition_WithValidCondition_ShouldReturnResults() {
+        // given
+        HolidaySearchCondition searchCondition = new HolidaySearchCondition();
+        searchCondition.setName("신정");
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Holiday testHoliday = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 1, 1),
+                "신정", "New Year's Day", true, true, 1949, "Public", null
+        );
+        testHoliday.setId(1L);
+
+        List<HolidayResponse> responseList = Arrays.asList(
+                HolidayResponse.builder()
+                        .id(1L)
+                        .countryCode("KR")
+                        .countryName("Korea")
+                        .date(LocalDate.of(2024, 1, 1))
+                        .localName("신정")
+                        .name("New Year's Day")
+                        .build()
+        );
+
+        Page<HolidayResponse> expectedPage = new PageImpl<>(responseList, pageable, 1);
+
+        when(holidayRepository.searchHolidayListWithSearchCondition(searchCondition, pageable))
+                .thenReturn(expectedPage);
+
+        // when
+        Page<HolidayResponse> result = holidayService.searchHolidayListWithSearchCondition(searchCondition, pageable);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().size());
+
+        HolidayResponse response = result.getContent().get(0);
+        assertEquals("KR", response.getCountryCode());
+        assertEquals("신정", response.getLocalName());
+
+        verify(holidayRepository).searchHolidayListWithSearchCondition(searchCondition, pageable);
+    }
+
+    @Test
+    @DisplayName("고급 검색 - 검색 조건에 맞는 데이터가 없는 경우 빈 페이지 반환")
+    void searchHolidayListWithSearchCondition_WithNoMatchingData_ShouldReturnEmptyPage() {
+        // given
+        HolidaySearchCondition searchCondition = new HolidaySearchCondition();
+        searchCondition.setName("존재하지않는공휴일");
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<HolidayResponse> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(holidayRepository.searchHolidayListWithSearchCondition(searchCondition, pageable))
+                .thenReturn(emptyPage);
+
+        // when
+        Page<HolidayResponse> result = holidayService.searchHolidayListWithSearchCondition(searchCondition, pageable);
+
+        // then
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        assertTrue(result.getContent().isEmpty());
+
+        verify(holidayRepository).searchHolidayListWithSearchCondition(searchCondition, pageable);
     }
 }
