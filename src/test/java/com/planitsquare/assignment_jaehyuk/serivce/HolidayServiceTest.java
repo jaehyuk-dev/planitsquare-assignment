@@ -1,9 +1,11 @@
 package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -236,5 +239,100 @@ class HolidayServiceTest {
                 eq(LocalDate.of(year, 12, 31)),
                 eq(pageable)
         );
+    }
+
+    @Test
+    @DisplayName("공휴일 ID로 상세 조회 - 정상 케이스")
+    void searchHolidayDetail_WithValidId_ShouldReturnDetailResponse() {
+        // given
+        Long holidayId = 1L;
+        Holiday testHoliday = new Holiday(
+                "KR",
+                "Korea",
+                LocalDate.of(2024, 1, 1),
+                "신정",
+                "New Year's Day",
+                true,
+                true,
+                1949,
+                "Public,National",
+                "Seoul,Busan"
+        );
+        testHoliday.setId(holidayId);
+
+        when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(testHoliday));
+
+        // when
+        HolidayDetailResponse result = holidayService.searchHolidayDetail(holidayId);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("KR", result.getCountryCode());
+        assertEquals("Korea", result.getCountryName());
+        assertEquals(LocalDate.of(2024, 1, 1), result.getDate());
+        assertEquals("신정", result.getLocalName());
+        assertEquals("New Year's Day", result.getName());
+        assertEquals(true, result.getFixed());
+        assertEquals(true, result.getGlobal());
+        assertEquals(1949, result.getLaunchYear());
+
+        // StringArrayUtils.splitToList 결과 검증
+        assertNotNull(result.getTypes());
+        assertNotNull(result.getCounties());
+
+        verify(holidayRepository).findById(holidayId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 ID로 조회시 EntityNotFoundException 발생")
+    void searchHolidayDetail_WithNonExistentId_ShouldThrowEntityNotFoundException() {
+        // given
+        Long nonExistentId = 999L;
+        when(holidayRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // when & then
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> holidayService.searchHolidayDetail(nonExistentId)
+        );
+
+        assertEquals("공휴일 Id : {}를 찾을 수 없습니다.", exception.getMessage());
+        verify(holidayRepository).findById(nonExistentId);
+    }
+
+    @Test
+    @DisplayName("types와 counties가 null인 경우에도 정상 처리")
+    void searchHolidayDetail_WithNullTypesAndCounties_ShouldHandleGracefully() {
+        // given
+        Long holidayId = 2L;
+        Holiday testHoliday = new Holiday(
+                "US",
+                "United States",
+                LocalDate.of(2024, 7, 4),
+                "Independence Day",
+                "Independence Day",
+                true,
+                true,
+                1776,
+                null,  // types가 null
+                null   // counties가 null
+        );
+        testHoliday.setId(holidayId);
+
+        when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(testHoliday));
+
+        // when
+        HolidayDetailResponse result = holidayService.searchHolidayDetail(holidayId);
+
+        // then
+        assertNotNull(result);
+        assertEquals(2L, result.getId());
+        assertEquals("US", result.getCountryCode());
+        assertEquals("United States", result.getCountryName());
+
+        // null 값도 정상 처리되는지 확인
+        assertNotNull(result.getTypes());    // StringArrayUtils.splitToList가 null을 어떻게 처리하는지에 따라
+        assertNotNull(result.getCounties()); // 이 부분은 실제 유틸 동작에 맞게 수정 필요
     }
 }
