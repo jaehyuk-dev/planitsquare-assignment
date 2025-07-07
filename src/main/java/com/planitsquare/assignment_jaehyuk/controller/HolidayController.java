@@ -1,5 +1,6 @@
 package com.planitsquare.assignment_jaehyuk.controller;
 
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidayDeleteForm;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
@@ -82,5 +83,20 @@ public class HolidayController {
         log.info("공휴일 고급 검색 요청");
 
         return ResponseEntity.ok(holidayService.searchHolidayListWithSearchCondition(searchCondition, pageable));
+    }
+
+    /**
+     * 공휴일 데이터 새로고침 API
+     * @param deleteForm 삭제 요청 데이터 조건
+     * @return 새로고침 결과
+     */
+    @DeleteMapping("/")
+    public ResponseEntity<String> deleteHolidayData(
+            @RequestBody @Valid HolidayDeleteForm deleteForm) {
+
+        log.info("공휴일 데이터 삭제 요청 - 국가: {}, 연도: {}", deleteForm.getCountryCode(), deleteForm.getYear());
+        holidayService.deleteHoliday(deleteForm);
+
+        return ResponseEntity.ok("success");
     }
 }

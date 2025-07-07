@@ -2,6 +2,7 @@ package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidayDeleteForm;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
@@ -199,5 +200,14 @@ public class HolidayService {
         }
 
         log.info("공휴일 데이터 새로고침 완료 - 국가: {}, 연도: {}, 업데이트: {}, 추가: {}, 삭제: {}", updateForm.getCountryCode(), updateForm.getYear(), updatedCount, addedCount, deletedCount);
+    }
+
+    @Transactional
+    public void deleteHoliday(HolidayDeleteForm deleteForm) {
+        LocalDate startDate = LocalDate.of(deleteForm.getYear(), 1, 1);
+        LocalDate endDate = LocalDate.of(deleteForm.getYear(), 12, 31);
+        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(deleteForm.getCountryCode(), deleteForm.getCountryName(), startDate, endDate);
+
+        holidayRepository.deleteAllInBatch(existingHolidaysList);
     }
 }
