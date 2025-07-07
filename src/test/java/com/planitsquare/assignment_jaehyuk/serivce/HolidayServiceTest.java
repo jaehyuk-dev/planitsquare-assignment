@@ -2,6 +2,7 @@ package com.planitsquare.assignment_jaehyuk.serivce;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidayDeleteForm;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
@@ -585,5 +586,77 @@ class HolidayServiceTest {
         assertTrue(result.getContent().isEmpty());
 
         verify(holidayRepository).searchHolidayListWithSearchCondition(searchCondition, pageable);
+    }
+
+    @Test
+    @DisplayName("공휴일 삭제 - 해당 연도의 모든 공휴일 삭제 성공")
+    void deleteHoliday_WithExistingData_ShouldDeleteAllHolidays() {
+        // given
+        HolidayDeleteForm deleteForm = new HolidayDeleteForm();
+        deleteForm.setCountryCode("KR");
+        deleteForm.setCountryName("Korea");
+        deleteForm.setYear(2024);
+
+        Holiday holiday1 = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 1, 1),
+                "신정", "New Year's Day", true, true, 1949, "Public", null
+        );
+        holiday1.setId(1L);
+
+        Holiday holiday2 = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 3, 1),
+                "삼일절", "Independence Movement Day", true, true, 1949, "Public", null
+        );
+        holiday2.setId(2L);
+
+        List<Holiday> existingHolidays = Arrays.asList(holiday1, holiday2);
+
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("KR"),
+                eq("Korea"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(existingHolidays);
+
+        // when
+        holidayService.deleteHoliday(deleteForm);
+
+        // then
+        verify(holidayRepository).findByCountryCodeAndCountryNameAndDateBetween(
+                "KR", "Korea",
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        );
+        verify(holidayRepository).deleteAllInBatch(existingHolidays);
+    }
+
+    @Test
+    @DisplayName("공휴일 삭제 - 삭제할 데이터가 없는 경우 빈 리스트로 삭제 호출")
+    void deleteHoliday_WithNoExistingData_ShouldCallDeleteWithEmptyList() {
+        // given
+        HolidayDeleteForm deleteForm = new HolidayDeleteForm();
+        deleteForm.setCountryCode("XX");
+        deleteForm.setCountryName("Unknown");
+        deleteForm.setYear(2024);
+
+        List<Holiday> emptyList = Collections.emptyList();
+
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("XX"),
+                eq("Unknown"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(emptyList);
+
+        // when
+        holidayService.deleteHoliday(deleteForm);
+
+        // then
+        verify(holidayRepository).findByCountryCodeAndCountryNameAndDateBetween(
+                "XX", "Unknown",
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        );
+        verify(holidayRepository).deleteAllInBatch(emptyList);
     }
 }
