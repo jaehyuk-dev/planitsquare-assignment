@@ -1,6 +1,8 @@
 package com.planitsquare.assignment_jaehyuk.serivce;
 
+import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
@@ -37,6 +39,9 @@ class HolidayServiceTest {
 
     @InjectMocks
     private HolidayService holidayService;
+
+    @Mock
+    private NagerDateApiClient nagerDateApiClient;
 
     private HolidayDto testHolidayDto;
 
@@ -334,5 +339,179 @@ class HolidayServiceTest {
         // null 값도 정상 처리되는지 확인
         assertNotNull(result.getTypes());    // StringArrayUtils.splitToList가 null을 어떻게 처리하는지에 따라
         assertNotNull(result.getCounties()); // 이 부분은 실제 유틸 동작에 맞게 수정 필요
+    }
+
+    @Test
+    @DisplayName("새로운 공휴일 추가 시나리오")
+    void updateHolidayList_WithNewHolidays_ShouldAddNewHolidays() {
+        // given
+        HolidayUpdateForm updateForm = new HolidayUpdateForm();
+        updateForm.setCountryCode("KR");
+        updateForm.setCountryName("Korea");
+        updateForm.setYear(2024);
+
+        // 기존 DB에는 데이터 없음
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("KR"), eq("Korea"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(Collections.emptyList());
+
+        // API에서 새로운 공휴일 데이터
+        List<HolidayDto> newHolidays = Arrays.asList(
+                HolidayDto.builder()
+                        .countryCode("KR")
+                        .date(LocalDate.of(2024, 1, 1))
+                        .localName("신정")
+                        .name("New Year's Day")
+                        .fixed(true)
+                        .global(true)
+                        .launchYear(1949)
+                        .types(Arrays.asList("Public"))
+                        .counties(Collections.emptyList())
+                        .build()
+        );
+
+        when(nagerDateApiClient.getPublicHolidays("KR", 2024)).thenReturn(newHolidays);
+
+        // when
+        holidayService.updateHolidayList(updateForm);
+
+        // then
+        verify(holidayRepository).save(any(Holiday.class));
+        verify(holidayRepository, never()).deleteAllByIdInBatch(any());
+    }
+
+    @Test
+    @DisplayName("기존 공휴일 삭제 시나리오")
+    void updateHolidayList_WithRemovedHolidays_ShouldDeleteHolidays() {
+        // given
+        HolidayUpdateForm updateForm = new HolidayUpdateForm();
+        updateForm.setCountryCode("KR");
+        updateForm.setCountryName("Korea");
+        updateForm.setYear(2024);
+
+        // 기존 DB에 공휴일 있음
+        Holiday existingHoliday = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 1, 1),
+                "신정", "New Year's Day", true, true, 1949, "Public", null
+        );
+        existingHoliday.setId(1L);
+
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("KR"), eq("Korea"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(Arrays.asList(existingHoliday));
+
+        // API에서는 해당 공휴일이 없음 (삭제됨)
+        when(nagerDateApiClient.getPublicHolidays("KR", 2024)).thenReturn(Collections.emptyList());
+
+        // when
+        holidayService.updateHolidayList(updateForm);
+
+        // then
+        verify(holidayRepository).deleteAllByIdInBatch(Arrays.asList(1L));
+        verify(holidayRepository, never()).save(any(Holiday.class));
+    }
+
+    @Test
+    @DisplayName("혼합 시나리오 - 추가, 업데이트, 삭제 모두 발생")
+    void updateHolidayList_WithMixedChanges_ShouldHandleAllOperations() {
+        // given
+        HolidayUpdateForm updateForm = new HolidayUpdateForm();
+        updateForm.setCountryCode("KR");
+        updateForm.setCountryName("Korea");
+        updateForm.setYear(2024);
+
+        // 기존 DB 데이터 (2개)
+        Holiday existingHoliday1 = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 1, 1),
+                "신정", "New Year's Day", true, true, 1949, "Public", null
+        );
+        existingHoliday1.setId(1L);
+
+        Holiday existingHoliday2 = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 12, 25),
+                "크리스마스", "Christmas", true, true, 1949, "Public", null
+        );
+        existingHoliday2.setId(2L);
+
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("KR"), eq("Korea"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(Arrays.asList(existingHoliday1, existingHoliday2));
+
+        // API 데이터 (1개는 업데이트, 1개는 새로 추가, 크리스마스는 삭제)
+        List<HolidayDto> apiHolidays = Arrays.asList(
+                // 기존 신정 업데이트
+                HolidayDto.builder()
+                        .countryCode("KR")
+                        .date(LocalDate.of(2024, 1, 1))
+                        .localName("새해")  // 이름 변경
+                        .name("New Year")   // 이름 변경
+                        .fixed(true)
+                        .global(true)
+                        .launchYear(1949)
+                        .types(Arrays.asList("Public"))
+                        .counties(Collections.emptyList())
+                        .build(),
+                // 새로운 공휴일 추가
+                HolidayDto.builder()
+                        .countryCode("KR")
+                        .date(LocalDate.of(2024, 3, 1))
+                        .localName("삼일절")
+                        .name("Independence Movement Day")
+                        .fixed(true)
+                        .global(true)
+                        .launchYear(1949)
+                        .types(Arrays.asList("Public"))
+                        .counties(Collections.emptyList())
+                        .build()
+                // 크리스마스는 API에 없음 -> 삭제 대상
+        );
+
+        when(nagerDateApiClient.getPublicHolidays("KR", 2024)).thenReturn(apiHolidays);
+
+        // when
+        holidayService.updateHolidayList(updateForm);
+
+        // then
+        verify(holidayRepository).save(any(Holiday.class)); // 새 공휴일 추가
+        verify(holidayRepository).deleteAllByIdInBatch(Arrays.asList(2L)); // 크리스마스 삭제
+    }
+
+    @Test
+    @DisplayName("API에서 빈 데이터 반환시 모든 기존 공휴일 삭제")
+    void updateHolidayList_WithEmptyApiData_ShouldDeleteAllExisting() {
+        // given
+        HolidayUpdateForm updateForm = new HolidayUpdateForm();
+        updateForm.setCountryCode("KR");
+        updateForm.setCountryName("Korea");
+        updateForm.setYear(2024);
+
+        // 기존 DB에 데이터 있음
+        Holiday existingHoliday = new Holiday(
+                "KR", "Korea", LocalDate.of(2024, 1, 1),
+                "신정", "New Year's Day", true, true, 1949, "Public", null
+        );
+        existingHoliday.setId(1L);
+
+        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                eq("KR"), eq("Korea"),
+                eq(LocalDate.of(2024, 1, 1)),
+                eq(LocalDate.of(2024, 12, 31))
+        )).thenReturn(Arrays.asList(existingHoliday));
+
+        // API에서 빈 데이터 반환
+        when(nagerDateApiClient.getPublicHolidays("KR", 2024)).thenReturn(Collections.emptyList());
+
+        // when
+        holidayService.updateHolidayList(updateForm);
+
+        // then
+        verify(holidayRepository).deleteAllByIdInBatch(Arrays.asList(1L));
+        verify(holidayRepository, never()).save(any(Holiday.class));
     }
 }
