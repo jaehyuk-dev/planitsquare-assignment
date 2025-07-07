@@ -40,3 +40,9 @@ logging:
 
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+external:
+  api:
+    nager:
+      base-url: https://date.nager.at/api/v3
+      max-in-memory-size: 1048576  # 1MB (1024 * 1024)
