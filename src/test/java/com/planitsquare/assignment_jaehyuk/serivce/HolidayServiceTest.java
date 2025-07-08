@@ -588,6 +588,8 @@ class HolidayServiceTest {
         verify(holidayRepository).searchHolidayListWithSearchCondition(searchCondition, pageable);
     }
 
+// ========== deleteHoliday 테스트 ==========
+
     @Test
     @DisplayName("공휴일 삭제 - 해당 연도의 모든 공휴일 삭제 성공")
     void deleteHoliday_WithExistingData_ShouldDeleteAllHolidays() {
@@ -597,66 +599,57 @@ class HolidayServiceTest {
         deleteForm.setCountryName("Korea");
         deleteForm.setYear(2024);
 
-        Holiday holiday1 = new Holiday(
-                "KR", "Korea", LocalDate.of(2024, 1, 1),
-                "신정", "New Year's Day", true, true, 1949, "Public", null
-        );
-        holiday1.setId(1L);
+        Long expectedDeleteCount = 5L; // 삭제될 데이터 개수
 
-        Holiday holiday2 = new Holiday(
-                "KR", "Korea", LocalDate.of(2024, 3, 1),
-                "삼일절", "Independence Movement Day", true, true, 1949, "Public", null
-        );
-        holiday2.setId(2L);
-
-        List<Holiday> existingHolidays = Arrays.asList(holiday1, holiday2);
-
-        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
-                eq("KR"),
-                eq("Korea"),
-                eq(LocalDate.of(2024, 1, 1)),
-                eq(LocalDate.of(2024, 12, 31))
-        )).thenReturn(existingHolidays);
+        when(holidayRepository.deleteByCountryCodeAndYear("KR", 2024))
+                .thenReturn(expectedDeleteCount);
 
         // when
         holidayService.deleteHoliday(deleteForm);
 
         // then
-        verify(holidayRepository).findByCountryCodeAndCountryNameAndDateBetween(
-                "KR", "Korea",
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-        verify(holidayRepository).deleteAllInBatch(existingHolidays);
+        verify(holidayRepository).deleteByCountryCodeAndYear("KR", 2024);
     }
 
     @Test
-    @DisplayName("공휴일 삭제 - 삭제할 데이터가 없는 경우 빈 리스트로 삭제 호출")
-    void deleteHoliday_WithNoExistingData_ShouldCallDeleteWithEmptyList() {
+    @DisplayName("공휴일 삭제 - 삭제할 데이터가 없는 경우 0개 삭제")
+    void deleteHoliday_WithNoExistingData_ShouldReturnZeroCount() {
         // given
         HolidayDeleteForm deleteForm = new HolidayDeleteForm();
-        deleteForm.setCountryCode("XX");
-        deleteForm.setCountryName("Unknown");
+        deleteForm.setCountryCode("KR");
+        deleteForm.setCountryName("Korea");
         deleteForm.setYear(2024);
 
-        List<Holiday> emptyList = Collections.emptyList();
+        Long expectedDeleteCount = 0L; // 삭제될 데이터가 없음
 
-        when(holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
-                eq("XX"),
-                eq("Unknown"),
-                eq(LocalDate.of(2024, 1, 1)),
-                eq(LocalDate.of(2024, 12, 31))
-        )).thenReturn(emptyList);
+        when(holidayRepository.deleteByCountryCodeAndYear("KR", 2024))
+                .thenReturn(expectedDeleteCount);
 
         // when
         holidayService.deleteHoliday(deleteForm);
 
         // then
-        verify(holidayRepository).findByCountryCodeAndCountryNameAndDateBetween(
-                "XX", "Unknown",
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-        verify(holidayRepository).deleteAllInBatch(emptyList);
+        verify(holidayRepository).deleteByCountryCodeAndYear("KR", 2024);
+    }
+
+    @Test
+    @DisplayName("공휴일 삭제 - 다른 국가코드와 연도로 삭제 요청")
+    void deleteHoliday_WithDifferentCountryAndYear_ShouldCallWithCorrectParams() {
+        // given
+        HolidayDeleteForm deleteForm = new HolidayDeleteForm();
+        deleteForm.setCountryCode("US");
+        deleteForm.setCountryName("United States");
+        deleteForm.setYear(2023);
+
+        Long expectedDeleteCount = 3L;
+
+        when(holidayRepository.deleteByCountryCodeAndYear("US", 2023))
+                .thenReturn(expectedDeleteCount);
+
+        // when
+        holidayService.deleteHoliday(deleteForm);
+
+        // then
+        verify(holidayRepository).deleteByCountryCodeAndYear("US", 2023);
     }
 }
