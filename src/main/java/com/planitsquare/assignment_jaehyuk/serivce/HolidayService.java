@@ -8,6 +8,7 @@ import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
+import com.planitsquare.assignment_jaehyuk.repository.HolidayBulkRepository;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.DateUtils;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +37,7 @@ public class HolidayService {
 
     private final HolidayRepository holidayRepository;
     private final NagerDateApiClient nagerDateApiClient;
-
+    private final HolidayBulkRepository holidayBulkRepository;
 
     @Transactional
     public List<HolidayDto> saveAllHolidaysBulk(List<HolidayDto> holidayDtos, Map<String, String> countryNameMap) {
@@ -44,28 +46,28 @@ public class HolidayService {
             return List.of();
         }
 
-        log.info("벌크 저장 시작: {} 개 공휴일", holidayDtos.size());
+        log.info("JDBC 벌크 저장 시작: {} 개 공휴일", holidayDtos.size());
 
         try {
+            LocalDateTime now = LocalDateTime.now();
+
             List<Holiday> holidays = holidayDtos.stream()
-                    .map(dto -> convertToEntityBulk(dto, countryNameMap))
+                    .map(dto -> convertToEntityBulk(dto, countryNameMap, now))
                     .toList();
 
-            List<Holiday> savedHolidays = holidayRepository.saveAll(holidays);
+            int insertedCount = holidayBulkRepository.bulkInsert(holidays);
 
-            log.info("벌크 저장 완료: {} 개 공휴일이 저장되었습니다", savedHolidays.size());
+            log.info("JDBC 벌크 저장 완료: {} 개 공휴일이 저장되었습니다", insertedCount);
 
-            return savedHolidays.stream()
-                    .map(this::convertToDtoBulk)
-                    .toList();
+            return holidayDtos; // 원본 DTO 반환 (ID는 불필요)
 
         } catch (Exception e) {
-            log.error("벌크 저장 중 오류 발생", e);
+            log.error("JDBC 벌크 저장 중 오류 발생", e);
             throw new RuntimeException("공휴일 벌크 저장 실패: " + e.getMessage(), e);
         }
     }
 
-    private Holiday convertToEntityBulk(HolidayDto dto, Map<String, String> countryNameMap) {
+    private Holiday convertToEntityBulk(HolidayDto dto, Map<String, String> countryNameMap, LocalDateTime timestamp) {
         if (dto == null) {
             return null;
         }
@@ -90,24 +92,6 @@ public class HolidayService {
                 .build();
     }
 
-    private HolidayDto convertToDtoBulk(Holiday entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        return HolidayDto.builder()
-                .date(entity.getDate())
-                .localName(entity.getLocalName())
-                .name(entity.getName())
-                .countryCode(entity.getCountryCode())
-                .fixed(entity.getFixed())
-                .global(entity.getGlobal())
-                .counties(convertStringToCountiesList(entity.getCounties()))
-                .launchYear(entity.getLaunchYear())
-                .types(convertStringToTypesList(entity.getTypes()))
-                .build();
-    }
-
     private String convertCountiesListToString(List<String> counties) {
         if (counties == null || counties.isEmpty()) {
             return null;
@@ -121,22 +105,6 @@ public class HolidayService {
         }
         return String.join(",", types);
     }
-
-    private List<String> convertStringToCountiesList(String counties) {
-        if (counties == null || counties.trim().isEmpty()) {
-            return List.of();
-        }
-        return Arrays.asList(counties.split(","));
-    }
-
-    private List<String> convertStringToTypesList(String types) {
-        if (types == null || types.trim().isEmpty()) {
-            return List.of();
-        }
-        return Arrays.asList(types.split(","));
-    }
-
-
 
     @Transactional
     public void saveHolidayList(String countryName, List<HolidayDto> holidayDtoList) {
