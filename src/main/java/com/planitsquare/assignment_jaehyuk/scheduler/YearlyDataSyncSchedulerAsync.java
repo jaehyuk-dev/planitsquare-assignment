@@ -3,7 +3,7 @@ package com.planitsquare.assignment_jaehyuk.scheduler;
 import com.planitsquare.assignment_jaehyuk.client.NagerDataApiClientAsync;
 import com.planitsquare.assignment_jaehyuk.dto.external.CountryDto;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
-import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
+import com.planitsquare.assignment_jaehyuk.service.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

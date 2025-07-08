@@ -5,7 +5,7 @@ import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
-import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
+import com.planitsquare.assignment_jaehyuk.service.HolidayService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

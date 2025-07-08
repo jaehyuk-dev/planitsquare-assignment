@@ -1,4 +1,4 @@
-package com.planitsquare.assignment_jaehyuk.serivce;
+package com.planitsquare.assignment_jaehyuk.service;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;

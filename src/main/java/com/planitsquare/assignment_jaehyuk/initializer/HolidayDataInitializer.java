@@ -4,7 +4,7 @@ package com.planitsquare.assignment_jaehyuk.initializer;
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.CountryDto;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
-import com.planitsquare.assignment_jaehyuk.serivce.HolidayService;
+import com.planitsquare.assignment_jaehyuk.service.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

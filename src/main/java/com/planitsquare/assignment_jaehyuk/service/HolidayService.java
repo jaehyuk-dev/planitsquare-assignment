@@ -1,4 +1,4 @@
-package com.planitsquare.assignment_jaehyuk.serivce;
+package com.planitsquare.assignment_jaehyuk.service;
 
 import com.planitsquare.assignment_jaehyuk.client.NagerDateApiClient;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
@@ -14,7 +14,6 @@ import com.planitsquare.assignment_jaehyuk.repository.HolidayBulkRepository;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.DateUtils;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
