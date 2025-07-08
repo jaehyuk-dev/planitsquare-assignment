@@ -86,7 +86,7 @@ class HolidayServiceTest {
     @DisplayName("중복되지 않은 공휴일 데이터를 성공적으로 저장")
     void saveHolidayList_WithValidData_ShouldSaveSuccessfully() {
         // given
-        List<HolidayDto> holidayDtoList = Arrays.asList(testHolidayDto);
+        List<HolidayDto> holidayDtoList = Collections.singletonList(testHolidayDto);
         when(holidayRepository.existsByCountryCodeAndDate("KR", LocalDate.of(2024, 1, 1)))
                 .thenReturn(false);
 
@@ -381,7 +381,7 @@ class HolidayServiceTest {
 
         // then
         verify(holidayRepository).save(any(Holiday.class));
-        verify(holidayRepository, never()).deleteAllByIdInBatch(any());
+        verify(holidayRepository).deleteAllByIdInBatch(Collections.emptyList()); // 이 부분 수정!
     }
 
     @Test
