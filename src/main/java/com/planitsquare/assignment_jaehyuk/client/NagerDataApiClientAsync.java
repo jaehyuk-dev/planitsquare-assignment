@@ -2,6 +2,8 @@ package com.planitsquare.assignment_jaehyuk.client;
 
 import com.planitsquare.assignment_jaehyuk.dto.external.CountryDto;
 import com.planitsquare.assignment_jaehyuk.dto.external.HolidayDto;
+import com.planitsquare.assignment_jaehyuk.error.ErrorCode;
+import com.planitsquare.assignment_jaehyuk.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -30,14 +32,10 @@ public class NagerDataApiClientAsync {
                 .uri("/AvailableCountries")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new RuntimeException(
-                                String.format("서버 에러: %d 에러", response.statusCode().value())
-                        ))
+                        Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                 )
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
-                        Mono.error(new RuntimeException(
-                                String.format("외부 API 호출 실패: %d 에러", response.statusCode().value())
-                        ))
+                        Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                 )
                 .bodyToMono(CountryDto[].class)
                 .map(Arrays::asList)
@@ -54,10 +52,10 @@ public class NagerDataApiClientAsync {
                         log.error("국가 목록 조회 중 예외 발생", e)
                 )
                 .onErrorMap(WebClientResponseException.class, e ->
-                        new RuntimeException("국가 목록 조회에 실패했습니다: " + e.getMessage(), e)
+                        new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED)
                 )
                 .onErrorMap(Exception.class, e ->
-                        new RuntimeException("국가 목록 조회 중 오류가 발생했습니다: " + e.getMessage(), e)
+                        new BusinessException(ErrorCode.EXTERNAL_API_TIMEOUT)
                 );
     }
 
@@ -69,14 +67,10 @@ public class NagerDataApiClientAsync {
                 .uri("/PublicHolidays/{year}/{countryCode}", year, countryCode)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new RuntimeException(
-                                String.format("서버 에러: %d 에러", response.statusCode().value())
-                        ))
+                        Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                 )
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
-                        Mono.error(new RuntimeException(
-                                String.format("외부 API 호출 실패: %d 에러", response.statusCode().value())
-                        ))
+                        Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                 )
                 .bodyToMono(HolidayDto[].class)
                 .map(Arrays::asList)
@@ -99,16 +93,13 @@ public class NagerDataApiClientAsync {
                 )
                 .onErrorResume(WebClientResponseException.class, e -> {
                     if (e.getStatusCode().value() == 404) {
-                        return Mono.just(List.of());  // 🎯 404일 때 빈 리스트 반환!
+                        return Mono.just(List.of());
                     }
-                    return Mono.error(new RuntimeException(
-                            String.format("공휴일 조회에 실패했습니다 (연도: %d, 국가: %s): %s",
-                                    year, countryCode, e.getMessage()), e));
+                    throw new BusinessException(ErrorCode.HOLIDAY_API_CALL_FAILED);
                 })
                 .onErrorMap(Exception.class, e ->
-                        new RuntimeException(
-                                String.format("공휴일 조회 중 오류가 발생했습니다 (연도: %d, 국가: %s): %s",
-                                        year, countryCode, e.getMessage()), e)
+                        new BusinessException(ErrorCode.EXTERNAL_API_TIMEOUT)
                 );
+
     }
 }

@@ -1,6 +1,8 @@
 package com.planitsquare.assignment_jaehyuk.repository;
 
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
+import com.planitsquare.assignment_jaehyuk.error.ErrorCode;
+import com.planitsquare.assignment_jaehyuk.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -62,7 +64,7 @@ public class HolidayBulkRepository {
 
         } catch (Exception e) {
             log.error("JDBC 배치 INSERT 실패", e);
-            throw new RuntimeException("배치 INSERT 실패: " + e.getMessage(), e);
+            throw new BusinessException(ErrorCode.BULK_INSERT_FAILED);
         }
     }
 }

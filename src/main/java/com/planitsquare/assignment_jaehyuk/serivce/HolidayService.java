@@ -8,6 +8,8 @@ import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayDetailResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.entity.Holiday;
+import com.planitsquare.assignment_jaehyuk.error.ErrorCode;
+import com.planitsquare.assignment_jaehyuk.error.exception.BusinessException;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayBulkRepository;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.DateUtils;
@@ -37,7 +39,6 @@ public class HolidayService {
     private final HolidayBulkRepository holidayBulkRepository;
 
 
-    // 🚀 JDBC 벌크 INSERT 방식
     @Transactional
     public List<HolidayDto> saveAllHolidaysBulk(List<HolidayDto> holidayDtos, Map<String, String> countryNameMap) {
         if (holidayDtos == null || holidayDtos.isEmpty()) {
@@ -64,11 +65,10 @@ public class HolidayService {
 
         } catch (Exception e) {
             log.error("JDBC 벌크 저장 중 오류 발생", e);
-            throw new RuntimeException("공휴일 벌크 저장 실패: " + e.getMessage(), e);
+            throw new BusinessException(ErrorCode.HOLIDAY_BULK_SAVE_FAILED);
         }
     }
 
-    // 🔄 수정: 시간 파라미터 추가
     private Holiday convertToEntityBulk(HolidayDto dto, Map<String, String> countryNameMap, LocalDateTime timestamp) {
         if (dto == null) {
             return null;
@@ -109,13 +109,17 @@ public class HolidayService {
                 .toList();
 
         if (!holidayList.isEmpty()) {
-            holidayRepository.saveAll(holidayList);
-            log.info("공휴일 데이터 저장 완료 - 국가: {}, 저장된 건수: {}", countryName, holidayList.size());
+            try {
+                holidayRepository.saveAll(holidayList);
+                log.info("공휴일 데이터 저장 완료 - 국가: {}, 저장된 건수: {}", countryName, holidayList.size());
+            } catch (Exception e) {
+                log.error("공휴일 데이터 저장 실패 - 국가: {}", countryName, e);
+                throw new BusinessException(ErrorCode.HOLIDAY_BULK_SAVE_FAILED);
+            }
         } else {
             log.debug("저장할 유효한 공휴일 데이터가 없습니다 - 국가: {}", countryName);
         }
     }
-
     private boolean isNotDuplicate(String countryCode, LocalDate date) {
         boolean exists = holidayRepository.existsByCountryCodeAndDate(countryCode, date);
         if (exists) {
@@ -183,7 +187,7 @@ public class HolidayService {
      */
     public HolidayDetailResponse searchHolidayDetail(Long id){
         Holiday holiday = holidayRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("공휴일 Id : {}를 찾을 수 없습니다.")
+                () -> new BusinessException(ErrorCode.HOLIDAY_NOT_FOUND)
         );
 
         return HolidayDetailResponse.builder()
@@ -222,75 +226,106 @@ public class HolidayService {
                     log.info("공휴일 업데이트 완료 - ID: {}", id);
                 },
                 () -> {
-                    throw new EntityNotFoundException(String.format("공휴일 ID: %d를 찾을 수 없습니다.", id));
+                    throw new BusinessException(ErrorCode.HOLIDAY_NOT_FOUND);
                 }
         );
     }
 
     @Transactional
     public void saveHoliday(HolidayDto holidayDto, String countryName) {
-        holidayRepository.save(
-                Holiday.builder()
-                        .countryCode(holidayDto.getCountryCode())
-                        .countryName(countryName)
-                        .date(holidayDto.getDate())
-                        .localName(holidayDto.getLocalName())
-                        .name(holidayDto.getName())
-                        .fixed(holidayDto.getFixed())
-                        .global(holidayDto.getGlobal())
-                        .launchYear(holidayDto.getLaunchYear())
-                        .types(StringArrayUtils.joinFromList(holidayDto.getTypes()))
-                        .counties(StringArrayUtils.joinFromList(holidayDto.getCounties()))
-                        .build()
-        );
+        try {
+            holidayRepository.save(
+                    Holiday.builder()
+                            .countryCode(holidayDto.getCountryCode())
+                            .countryName(countryName)
+                            .date(holidayDto.getDate())
+                            .localName(holidayDto.getLocalName())
+                            .name(holidayDto.getName())
+                            .fixed(holidayDto.getFixed())
+                            .global(holidayDto.getGlobal())
+                            .launchYear(holidayDto.getLaunchYear())
+                            .types(StringArrayUtils.joinFromList(holidayDto.getTypes()))
+                            .counties(StringArrayUtils.joinFromList(holidayDto.getCounties()))
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("공휴일 저장 실패 - 국가: {}, 날짜: {}", countryName, holidayDto.getDate(), e);
+            throw new BusinessException(ErrorCode.HOLIDAY_BULK_SAVE_FAILED);
+        }
     }
 
     @Transactional
     public void updateHolidayList(HolidayUpdateForm updateForm){
-        DateUtils.DateRange yearRange = DateUtils.getYearRange(updateForm.getYear());
+        try {
+            DateUtils.DateRange yearRange = DateUtils.getYearRange(updateForm.getYear());
 
-        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(updateForm.getCountryCode(), updateForm.getCountryName(), yearRange.startDate(), yearRange.endDate());
+            List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(
+                    updateForm.getCountryCode(), updateForm.getCountryName(), yearRange.startDate(), yearRange.endDate());
 
-        List<HolidayDto> latestHolidayList = nagerDateApiClient.getPublicHolidays(updateForm.getCountryCode(), updateForm.getYear());
+            List<HolidayDto> latestHolidayList = nagerDateApiClient.getPublicHolidays(updateForm.getCountryCode(), updateForm.getYear());
 
-        // 3. 기존 데이터를 날짜 기준으로 Map으로 변환 (빠른 조회를 위해)
-        Map<LocalDate, Holiday> existingHolidayMap = existingHolidaysList.stream().collect(Collectors.toMap(Holiday::getDate, Function.identity()));
+            // 3. 기존 데이터를 날짜 기준으로 Map으로 변환 (빠른 조회를 위해)
+            Map<LocalDate, Holiday> existingHolidayMap = existingHolidaysList.stream()
+                    .collect(Collectors.toMap(Holiday::getDate, Function.identity()));
 
-        // 4. 최신 데이터를 날짜 기준으로 Map으로 변환
-        Map<LocalDate, HolidayDto> latestHolidayMap = latestHolidayList.stream().collect(Collectors.toMap(HolidayDto::getDate, Function.identity()));
+            // 4. 최신 데이터를 날짜 기준으로 Map으로 변환
+            Map<LocalDate, HolidayDto> latestHolidayMap = latestHolidayList.stream()
+                    .collect(Collectors.toMap(HolidayDto::getDate, Function.identity()));
 
-        int updatedCount = 0;
-        int addedCount = 0;
+            int updatedCount = 0;
+            int addedCount = 0;
 
-        // 🔥 처리된 날짜들을 추적!
-        Set<LocalDate> processedDates = new HashSet<>();
+            // 🔥 처리된 날짜들을 추적!
+            Set<LocalDate> processedDates = new HashSet<>();
 
-        // 5. 최신 데이터로 업데이트 또는 추가
-        for (HolidayDto latestDto : latestHolidayList) {
-            Holiday existingHoliday = existingHolidayMap.get(latestDto.getDate());
+            // 5. 최신 데이터로 업데이트 또는 추가
+            for (HolidayDto latestDto : latestHolidayList) {
+                Holiday existingHoliday = existingHolidayMap.get(latestDto.getDate());
 
-            if (existingHoliday != null) {
-                updateHoliday(latestDto, existingHoliday.getId());
-                updatedCount++;
-                log.debug("공휴일 업데이트 - 날짜: {}, 이름: {}", latestDto.getDate(), latestDto.getName());
-                existingHolidayMap.remove(latestDto.getDate());  // 🔥 처리된 것은 맵에서 제거!
-            } else {
-                saveHoliday(latestDto, updateForm.getCountryName());
-                addedCount++;
-                log.debug("새 공휴일 추가 - 날짜: {}, 이름: {}", latestDto.getDate(), latestDto.getName());
+                if (existingHoliday != null) {
+                    updateHoliday(latestDto, existingHoliday.getId());
+                    updatedCount++;
+                    log.debug("공휴일 업데이트 - 날짜: {}, 이름: {}", latestDto.getDate(), latestDto.getName());
+                    existingHolidayMap.remove(latestDto.getDate());  // 🔥 처리된 것은 맵에서 제거!
+                } else {
+                    saveHoliday(latestDto, updateForm.getCountryName());
+                    addedCount++;
+                    log.debug("새 공휴일 추가 - 날짜: {}, 이름: {}", latestDto.getDate(), latestDto.getName());
+                }
             }
+
+            holidayRepository.deleteAllByIdInBatch(existingHolidayMap.values().stream()
+                    .map(Holiday::getId)
+                    .toList()
+            );
+
+            log.info("공휴일 업데이트 완료 - 국가: {}, 업데이트: {}, 추가: {}, 삭제: {}",
+                    updateForm.getCountryName(), updatedCount, addedCount, existingHolidayMap.size());
+
+        } catch (BusinessException e) {
+            throw e; // BusinessException은 그대로 전파
+        } catch (Exception e) {
+            log.error("공휴일 업데이트 실패 - 국가: {}, 연도: {}", updateForm.getCountryName(), updateForm.getYear(), e);
+            throw new BusinessException(ErrorCode.HOLIDAY_UPDATE_FAILED);
         }
-
-
-        holidayRepository.deleteAllByIdInBatch(existingHolidayMap.values().stream()
-                .map(Holiday::getId)
-                .toList()
-        );
     }
 
     @Transactional
     public void deleteHoliday(HolidayDeleteForm deleteForm) {
-        Long deleteCount = holidayRepository.deleteByCountryCodeAndYear(deleteForm.getCountryCode(), deleteForm.getYear());
-        log.info("삭제된 데이터 개수: {}", deleteCount);
+        try {
+            Long deleteCount = holidayRepository.deleteByCountryCodeAndYear(deleteForm.getCountryCode(), deleteForm.getYear());
+
+            if (deleteCount == 0) {
+                log.warn("삭제할 공휴일 데이터가 없습니다 - 국가: {}, 연도: {}", deleteForm.getCountryCode(), deleteForm.getYear());
+                throw new BusinessException(ErrorCode.HOLIDAY_NOT_FOUND);
+            }
+
+            log.info("삭제된 데이터 개수: {}", deleteCount);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("공휴일 삭제 실패 - 국가: {}, 연도: {}", deleteForm.getCountryCode(), deleteForm.getYear(), e);
+            throw new BusinessException(ErrorCode.HOLIDAY_UPDATE_FAILED);
+        }
     }
 }
