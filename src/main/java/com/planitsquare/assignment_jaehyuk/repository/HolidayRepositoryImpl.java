@@ -3,6 +3,7 @@ package com.planitsquare.assignment_jaehyuk.repository;
 import com.planitsquare.assignment_jaehyuk.dto.request.HolidaySearchCondition;
 import com.planitsquare.assignment_jaehyuk.dto.response.HolidayResponse;
 import com.planitsquare.assignment_jaehyuk.dto.response.QHolidayResponse;
+import com.planitsquare.assignment_jaehyuk.util.DateUtils;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -59,6 +60,17 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
         long total = totalCount != null ? totalCount : 0L;
 
         return new PageImpl<>(holidayResponseList, pageable, total);
+    }
+
+    @Override
+    public Long deleteByCountryCodeAndYear(String countryCode, int year) {
+        DateUtils.DateRange yearRange = DateUtils.getYearRange(year);
+
+        return queryFactory
+                .delete(holiday)
+                .where(holiday.countryCode.eq(countryCode)
+                        .and(holiday.date.between(yearRange.startDate(), yearRange.endDate())))
+                .execute();
     }
 
     private BooleanBuilder buildSearchCondition(HolidaySearchCondition searchCondition) {

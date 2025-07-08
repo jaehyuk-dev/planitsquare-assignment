@@ -204,9 +204,7 @@ public class HolidayService {
 
     @Transactional
     public void deleteHoliday(HolidayDeleteForm deleteForm) {
-        DateUtils.DateRange yearRange = DateUtils.getYearRange(2024);
-        List<Holiday> existingHolidaysList = holidayRepository.findByCountryCodeAndCountryNameAndDateBetween(deleteForm.getCountryCode(), deleteForm.getCountryName(), yearRange.startDate(), yearRange.endDate());
-
-        holidayRepository.deleteAllInBatch(existingHolidaysList);
+        Long deleteCount = holidayRepository.deleteByCountryCodeAndYear(deleteForm.getCountryCode(), deleteForm.getYear());
+        log.info("삭제된 데이터 개수: {}", deleteCount);
     }
 }
