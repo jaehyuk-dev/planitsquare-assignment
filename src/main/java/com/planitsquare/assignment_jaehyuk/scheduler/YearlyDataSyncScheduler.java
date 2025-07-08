@@ -7,10 +7,12 @@ import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.service.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +30,13 @@ public class YearlyDataSyncScheduler {
 
     private final int endYear = LocalDate.now().getYear();
     private final int startYear = endYear - 1;
+    
+    @Value("${external.api.nager.rate-limit.delay:100ms}")
+    private String rateLimitDelayStr;
+    
+    private long getRateLimitDelayMs() {
+        return Duration.parse("PT" + rateLimitDelayStr.toUpperCase()).toMillis();
+    }
 
     @Scheduled(cron = "0 0 1 2 1 ?", zone = "Asia/Seoul")
     public void syncYearlyData() {
@@ -97,7 +106,7 @@ public class YearlyDataSyncScheduler {
                             updateForm.setYear(year);
                             holidayService.updateHolidayList(updateForm);
 
-                            Thread.sleep(100);
+                            Thread.sleep(getRateLimitDelayMs());
 
                         } catch (Exception e) {
                             log.warn("{}({}) {}년 데이터 조회 실패: {}", country.getName(), country.getCountryCode(), year, e.getMessage());

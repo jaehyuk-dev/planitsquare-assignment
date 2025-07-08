@@ -53,6 +53,12 @@ external:
     nager:
       base-url: https://date.nager.at/api/v3
       max-in-memory-size: 1048576  # 1MB (1024 * 1024)
+      timeout: 3s
+      retry:
+        max-attempts: 2
+        delay: 1s
+      rate-limit:
+        delay: 100ms
 
 holiday:
   data-initialization:
@@ -61,3 +67,9 @@ holiday:
 
   initializer:
     async: true
+  
+  scheduler:
+    async: true
+    concurrency:
+      max-countries: 30
+      max-years-per-country: 6

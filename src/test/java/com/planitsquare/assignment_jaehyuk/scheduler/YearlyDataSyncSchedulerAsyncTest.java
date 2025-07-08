@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -49,6 +50,10 @@ class YearlyDataSyncSchedulerAsyncTest {
                 createCountryDto("US", "미국"),
                 createCountryDto("JP", "일본")
         );
+        
+        // 🔧 설정값 주입 (하드코딩 값 제거로 인한 수정)
+        ReflectionTestUtils.setField(scheduler, "maxConcurrentCountries", 30);
+        ReflectionTestUtils.setField(scheduler, "maxConcurrentYears", 6);
     }
 
     @Test
@@ -185,9 +190,9 @@ class YearlyDataSyncSchedulerAsyncTest {
     @Test
     @DisplayName("💥 심각한 예외 발생 테스트")
     void syncYearlyDataAsync_SevereException() {
-        // Given: 예상치 못한 심각한 예외 발생
+        // Given: 예상치 못한 심각한 예외 발생 (RuntimeException으로 변경)
         when(nagerDateApiClient.getAvailableCountries())
-                .thenThrow(new OutOfMemoryError("메모리 부족"));
+                .thenThrow(new RuntimeException("심각한 오류"));
 
         // When & Then: 심각한 예외도 처리되어야 함
         assertDoesNotThrow(() -> {

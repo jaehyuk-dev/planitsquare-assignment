@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -34,6 +35,13 @@ public class HolidayDataInitializer implements ApplicationRunner {
 
     @Value("${holiday.data-initialization.end-year}")
     private int endYear;
+    
+    @Value("${external.api.nager.rate-limit.delay:100ms}")
+    private String rateLimitDelayStr;
+    
+    private long getRateLimitDelayMs() {
+        return Duration.parse("PT" + rateLimitDelayStr.toUpperCase()).toMillis();
+    }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -104,7 +112,7 @@ public class HolidayDataInitializer implements ApplicationRunner {
                                 log.debug("{}({}) {}년 공휴일 {} 개 수집", country.getName(), country.getCountryCode(), year, holidayList.size());
                             }
 
-                            Thread.sleep(100);
+                            Thread.sleep(getRateLimitDelayMs());
 
                         } catch (Exception e) {
                             log.warn("{}({}) {}년 데이터 조회 실패: {}", country.getName(), country.getCountryCode(), year, e.getMessage());

@@ -6,6 +6,7 @@ import com.planitsquare.assignment_jaehyuk.dto.request.HolidayUpdateForm;
 import com.planitsquare.assignment_jaehyuk.service.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -30,8 +31,11 @@ public class YearlyDataSyncSchedulerAsync {
     private final NagerDataApiClientAsync nagerDateApiClient;
     private final HolidayService holidayService;
 
-    private static final int MAX_CONCURRENT_COUNTRIES = 30;  // 동시 처리할 국가 수
-    private final int maxConcurrentCountries = MAX_CONCURRENT_COUNTRIES;
+    @Value("${holiday.scheduler.concurrency.max-countries:30}")
+    private int maxConcurrentCountries;
+    
+    @Value("${holiday.scheduler.concurrency.max-years-per-country:6}")
+    private int maxConcurrentYears;
 
     @Scheduled(cron = "0 0 1 2 1 ?", zone = "Asia/Seoul")
     public void syncYearlyDataAsync() {

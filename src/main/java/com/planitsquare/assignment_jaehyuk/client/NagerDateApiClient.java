@@ -6,6 +6,7 @@ import com.planitsquare.assignment_jaehyuk.error.ErrorCode;
 import com.planitsquare.assignment_jaehyuk.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,23 @@ import java.util.List;
 public class NagerDateApiClient {
 
     private final WebClient webClient;
+    
+    @Value("${external.api.nager.timeout:3s}")
+    private String timeoutStr;
+    
+    @Value("${external.api.nager.retry.max-attempts:2}")
+    private int retryMaxAttempts;
+    
+    @Value("${external.api.nager.retry.delay:1s}")
+    private String retryDelayStr;
+    
+    private Duration getTimeout() {
+        return Duration.parse("PT" + timeoutStr.toUpperCase());
+    }
+    
+    private Duration getRetryDelay() {
+        return Duration.parse("PT" + retryDelayStr.toUpperCase());
+    }
 
     public List<CountryDto> getAvailableCountries() {
         try {
@@ -39,8 +57,8 @@ public class NagerDateApiClient {
                             Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                     )
                     .bodyToMono(new ParameterizedTypeReference<List<CountryDto>>() {})
-                    .timeout(Duration.ofSeconds(3))
-                    .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(1)))
+                    .timeout(getTimeout())
+                    .retryWhen(Retry.fixedDelay(retryMaxAttempts, getRetryDelay()))
                     .block();
 
             log.info("국가 목록 조회 완료: {} 개국", countries != null ? countries.size() : 0);
@@ -70,8 +88,8 @@ public class NagerDateApiClient {
                             Mono.error(new BusinessException(ErrorCode.COUNTRY_API_CALL_FAILED))
                     )
                     .bodyToMono(new ParameterizedTypeReference<List<HolidayDto>>() {})
-                    .timeout(Duration.ofSeconds(3))
-                    .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(1)))
+                    .timeout(getTimeout())
+                    .retryWhen(Retry.fixedDelay(retryMaxAttempts, getRetryDelay()))
                     .block();
 
             log.info("공휴일 조회 완료 - 연도: {}, 국가코드: {}, 공휴일 수: {}",
