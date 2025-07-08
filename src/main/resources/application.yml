@@ -21,6 +21,12 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 1000
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        generate_statistics: true
     defer-datasource-initialization: true
 
 server:
@@ -32,6 +38,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.engine.jdbc.batch.internal.BatchingBatch: DEBUG
 
     org.springframework.web: DEBUG
     org.springframework.transaction: DEBUG
@@ -52,3 +59,5 @@ holiday:
     start-year: 2020
     end-year: 2025
 
+  initializer:
+    async: true

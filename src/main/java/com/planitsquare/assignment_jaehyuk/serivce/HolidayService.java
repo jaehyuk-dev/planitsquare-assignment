@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -34,6 +35,108 @@ public class HolidayService {
 
     private final HolidayRepository holidayRepository;
     private final NagerDateApiClient nagerDateApiClient;
+
+
+    @Transactional
+    public List<HolidayDto> saveAllHolidaysBulk(List<HolidayDto> holidayDtos, Map<String, String> countryNameMap) {
+        if (holidayDtos == null || holidayDtos.isEmpty()) {
+            log.warn("저장할 공휴일 데이터가 없습니다");
+            return List.of();
+        }
+
+        log.info("벌크 저장 시작: {} 개 공휴일", holidayDtos.size());
+
+        try {
+            List<Holiday> holidays = holidayDtos.stream()
+                    .map(dto -> convertToEntityBulk(dto, countryNameMap))
+                    .toList();
+
+            List<Holiday> savedHolidays = holidayRepository.saveAll(holidays);
+
+            log.info("벌크 저장 완료: {} 개 공휴일이 저장되었습니다", savedHolidays.size());
+
+            return savedHolidays.stream()
+                    .map(this::convertToDtoBulk)
+                    .toList();
+
+        } catch (Exception e) {
+            log.error("벌크 저장 중 오류 발생", e);
+            throw new RuntimeException("공휴일 벌크 저장 실패: " + e.getMessage(), e);
+        }
+    }
+
+    private Holiday convertToEntityBulk(HolidayDto dto, Map<String, String> countryNameMap) {
+        if (dto == null) {
+            return null;
+        }
+
+        String countryName = countryNameMap.get(dto.getCountryCode());
+        if (countryName == null) {
+            log.warn("국가 코드 {}에 대한 국가명을 찾을 수 없습니다", dto.getCountryCode());
+            countryName = dto.getCountryCode() + " (Unknown)";
+        }
+
+        return Holiday.builder()
+                .countryCode(dto.getCountryCode())
+                .countryName(countryName)
+                .date(dto.getDate())
+                .localName(dto.getLocalName())
+                .name(dto.getName())
+                .fixed(dto.getFixed())
+                .global(dto.getGlobal())
+                .counties(convertCountiesListToString(dto.getCounties()))
+                .launchYear(dto.getLaunchYear())
+                .types(convertTypesListToString(dto.getTypes()))
+                .build();
+    }
+
+    private HolidayDto convertToDtoBulk(Holiday entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return HolidayDto.builder()
+                .date(entity.getDate())
+                .localName(entity.getLocalName())
+                .name(entity.getName())
+                .countryCode(entity.getCountryCode())
+                .fixed(entity.getFixed())
+                .global(entity.getGlobal())
+                .counties(convertStringToCountiesList(entity.getCounties()))
+                .launchYear(entity.getLaunchYear())
+                .types(convertStringToTypesList(entity.getTypes()))
+                .build();
+    }
+
+    private String convertCountiesListToString(List<String> counties) {
+        if (counties == null || counties.isEmpty()) {
+            return null;
+        }
+        return String.join(",", counties);
+    }
+
+    private String convertTypesListToString(List<String> types) {
+        if (types == null || types.isEmpty()) {
+            return null;
+        }
+        return String.join(",", types);
+    }
+
+    private List<String> convertStringToCountiesList(String counties) {
+        if (counties == null || counties.trim().isEmpty()) {
+            return List.of();
+        }
+        return Arrays.asList(counties.split(","));
+    }
+
+    private List<String> convertStringToTypesList(String types) {
+        if (types == null || types.trim().isEmpty()) {
+            return List.of();
+        }
+        return Arrays.asList(types.split(","));
+    }
+
+
 
     @Transactional
     public void saveHolidayList(String countryName, List<HolidayDto> holidayDtoList) {
