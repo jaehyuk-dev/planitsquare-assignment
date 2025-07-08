@@ -445,6 +445,9 @@ class HolidayServiceTest {
                 eq(LocalDate.of(2024, 12, 31))
         )).thenReturn(Arrays.asList(existingHoliday1, existingHoliday2));
 
+        // 업데이트할 공휴일 findById Mock 추가
+        when(holidayRepository.findById(1L)).thenReturn(Optional.of(existingHoliday1));
+
         // API 데이터 (1개는 업데이트, 1개는 새로 추가, 크리스마스는 삭제)
         List<HolidayDto> apiHolidays = Arrays.asList(
                 // 기존 신정 업데이트
@@ -480,6 +483,7 @@ class HolidayServiceTest {
         holidayService.updateHolidayList(updateForm);
 
         // then
+        verify(holidayRepository).findById(1L); // 업데이트 대상 조회 확인
         verify(holidayRepository).save(any(Holiday.class)); // 새 공휴일 추가
         verify(holidayRepository).deleteAllByIdInBatch(Arrays.asList(2L)); // 크리스마스 삭제
     }
