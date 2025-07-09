@@ -46,7 +46,6 @@ public class YearlyDataSyncSchedulerAsync {
         stopWatch.start("연간 공휴일 데이터 동기화");
 
         try {
-            // 🎯 현재년도와 전년도 계산
             int currentYear = LocalDate.now().getYear();
             int previousYear = currentYear - 1;
 
@@ -87,10 +86,8 @@ public class YearlyDataSyncSchedulerAsync {
 
                     log.info("총 {} 개국의 공휴일 데이터를 비동기로 동기화합니다", countries.size());
 
-                    // 🎯 국가 코드 → 국가 이름 매핑 맵 생성
                     Map<String, String> countryNameMap = createCountryNameMap(countries);
 
-                    // 🚀 모든 국가를 비동기로 처리
                     return Flux.fromIterable(countries)
                             .flatMap(country ->
                                     syncCountryDataAsync(country, countryNameMap, previousYear, currentYear), maxConcurrentCountries)
@@ -130,13 +127,11 @@ public class YearlyDataSyncSchedulerAsync {
     private Mono<Boolean> syncCountryYearDataAsync(CountryDto country, Map<String, String> countryNameMap, int year) {
         return Mono.fromCallable(() -> {
                     try {
-                        // 🔥 HolidayUpdateForm 생성
                         HolidayUpdateForm updateForm = new HolidayUpdateForm();
                         updateForm.setCountryCode(country.getCountryCode());
                         updateForm.setCountryName(countryNameMap.get(country.getCountryCode()));
                         updateForm.setYear(year);
 
-                        // 🚀 기존 updateHolidayList 메서드 활용!
                         holidayService.updateHolidayList(updateForm);
 
                         log.debug("{}({}) {}년 동기화 완료",
@@ -166,7 +161,7 @@ public class YearlyDataSyncSchedulerAsync {
                 .collect(Collectors.toMap(
                         CountryDto::getCountryCode,
                         CountryDto::getName,
-                        (existing, replacement) -> existing  // 중복 키가 있으면 기존 값 유지
+                        (existing, replacement) -> existing
                 ));
 
         log.info("국가 매핑 맵 생성 완료: {} 개국", countryNameMap.size());

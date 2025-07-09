@@ -50,6 +50,6 @@ public class DateUtils {
      * 해당 연도의 시작일과 끝일을 DateRange 객체로 반환
      */
     public DateRange getYearRange(int year) {
-        return DateRange.ofYear(year);  // 🔥 정적 팩토리 메서드 활용
+        return DateRange.ofYear(year);
     }
 }

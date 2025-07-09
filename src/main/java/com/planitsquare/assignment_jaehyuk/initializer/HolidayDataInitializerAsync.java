@@ -111,7 +111,6 @@ class HolidayDataInitializerAsync implements ApplicationRunner {
                 });
     }
 
-    // 🔄 수정: 국가 매핑 맵을 함께 전달
     private Mono<List<HolidayDto>> collectAllHolidaysAsync(List<CountryDto> countries, Map<String, String> countryNameMap) {
         log.info("모든 국가의 공휴일 데이터 수집 시작");
 
@@ -137,7 +136,6 @@ class HolidayDataInitializerAsync implements ApplicationRunner {
                 )
                 .collectList()
                 .map(holidayLists -> {
-                    // 해당 국가의 모든 연도 공휴일을 합치기
                     List<HolidayDto> countryHolidays = holidayLists.stream()
                             .flatMap(List::stream)
                             .toList();

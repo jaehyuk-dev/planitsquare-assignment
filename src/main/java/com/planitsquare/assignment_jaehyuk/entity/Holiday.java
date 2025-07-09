@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class Holiday {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "holiday_seq")  // 🔥 SEQUENCE로 변경!
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "holiday_seq")
     @SequenceGenerator(name = "holiday_seq", sequenceName = "holiday_seq", allocationSize = 100)
     private Long id;
 
@@ -51,7 +51,6 @@ public class Holiday {
     @Column(columnDefinition = "TEXT")
     private String counties;
 
-    // 🔥 @CreationTimestamp, @UpdateTimestamp 제거! 수동 관리로 변경
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

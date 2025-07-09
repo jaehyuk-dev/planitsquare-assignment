@@ -37,7 +37,6 @@ public class HolidayBulkRepository {
         LocalDateTime now = LocalDateTime.now();
 
         try {
-            // 🚀 Object[][]로 배치 파라미터 준비
             List<Object[]> batchArgs = holidays.stream()
                     .map(holiday -> new Object[]{
                             holiday.getCountryCode(),
@@ -55,7 +54,6 @@ public class HolidayBulkRepository {
                     })
                     .toList();
 
-            // 🚀 진짜 배치 처리!
             int[] results = jdbcTemplate.batchUpdate(sql, batchArgs);
 
             int totalInserted = results.length;
