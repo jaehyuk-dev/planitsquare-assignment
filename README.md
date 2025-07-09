@@ -26,8 +26,7 @@
 ```
 
 **테스트 실행 결과:**
-- 총 31개 테스트 중 31개 성공 (100% 성공률)
-- 주요 기능 및 비동기 처리 테스트 모두 통과
+<img width="1278" height="533" alt="Image" src="https://github.com/user-attachments/assets/9892a194-7598-41f6-95c7-fd587a5a5a34" />
 - 테스트 상세 결과: `build/reports/tests/test/index.html`
 
 ## 🌐 REST API 명세 요약
