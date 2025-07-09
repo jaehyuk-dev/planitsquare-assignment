@@ -381,7 +381,7 @@ class HolidayServiceTest {
 
         // then
         verify(holidayRepository).save(any(Holiday.class));
-        verify(holidayRepository).deleteAllByIdInBatch(Collections.emptyList()); // 이 부분 수정!
+        verify(holidayRepository, never()).deleteAllByIdInBatch(anyList()); // 삭제할 데이터가 없으므로 호출되지 않음
     }
 
     @Test

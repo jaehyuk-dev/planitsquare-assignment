@@ -14,6 +14,7 @@ import com.planitsquare.assignment_jaehyuk.repository.HolidayBulkRepository;
 import com.planitsquare.assignment_jaehyuk.repository.HolidayRepository;
 import com.planitsquare.assignment_jaehyuk.util.DateUtils;
 import com.planitsquare.assignment_jaehyuk.util.StringArrayUtils;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -183,7 +184,7 @@ public class HolidayService {
      */
     public HolidayDetailResponse searchHolidayDetail(Long id){
         Holiday holiday = holidayRepository.findById(id).orElseThrow(
-                () -> new BusinessException(ErrorCode.HOLIDAY_NOT_FOUND)
+                () -> new EntityNotFoundException("공휴일 Id : {}를 찾을 수 없습니다.")
         );
 
         return HolidayDetailResponse.builder()
@@ -329,12 +330,11 @@ public class HolidayService {
 
             if (deleteCount == 0) {
                 log.warn("삭제할 공휴일 데이터가 없습니다 - 국가: {}, 연도: {}", deleteForm.getCountryCode(), deleteForm.getYear());
-                throw new BusinessException(ErrorCode.HOLIDAY_NOT_FOUND);
+                // 삭제할 데이터가 없어도 예외 발생하지 않음
+                return;
             }
 
             log.info("삭제된 데이터 개수: {}", deleteCount);
-        } catch (BusinessException e) {
-            throw e;
         } catch (Exception e) {
             log.error("공휴일 삭제 실패 - 국가: {}, 연도: {}", deleteForm.getCountryCode(), deleteForm.getYear(), e);
             throw new BusinessException(ErrorCode.HOLIDAY_UPDATE_FAILED);
