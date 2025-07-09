@@ -204,6 +204,7 @@ public class HolidayService {
                 .build();
     }
 
+    @Transactional
     public void updateHolidayList(HolidayUpdateForm updateForm) {
         try {
             log.debug("외부 API 호출 시작 - 국가: {}, 연도: {}", updateForm.getCountryCode(), updateForm.getYear());
@@ -231,7 +232,6 @@ public class HolidayService {
         }
     }
 
-    @Transactional
     public HolidayUpdateResult updateHolidayDataInTransaction(HolidayUpdateForm updateForm, List<HolidayDto> latestHolidayList) {
         DateUtils.DateRange yearRange = DateUtils.getYearRange(updateForm.getYear());
         
