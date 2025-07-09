@@ -49,7 +49,13 @@ public class HolidayController {
             @PathVariable String countryCode,
             @Parameter(description = "조회할 연도", example = "2024", required = true)
             @PathVariable int year,
-            @Parameter(description = "페이징 정보 (page, size, sort)")
+            @Parameter(description = "페이징 정보 (page, size, sort)",
+                    example = """
+                   {
+                     "page": 0,
+                     "size": 10
+                   }
+                   """)
             @PageableDefault(size = 10, sort = "date") Pageable pageable) {
 
         log.info("공휴일 기본 검색 요청 - 국가: {}, 연도: {}, 페이지: {}", countryCode, year, pageable.getPageNumber());
@@ -118,7 +124,13 @@ public class HolidayController {
     public ResponseEntity<Page<HolidayResponse>> searchHolidayList(
             @Parameter(description = "고급 검색 조건")
             @Valid HolidaySearchCondition searchCondition,
-            @Parameter(description = "페이징 정보 (page, size, sort)")
+            @Parameter(description = "페이징 정보 (page, size, sort)",
+                    example = """
+                   {
+                     "page": 0,
+                     "size": 10
+                   }
+                   """)
             @PageableDefault(size = 10, sort = "date") Pageable pageable) {
 
         log.info("공휴일 고급 검색 요청");

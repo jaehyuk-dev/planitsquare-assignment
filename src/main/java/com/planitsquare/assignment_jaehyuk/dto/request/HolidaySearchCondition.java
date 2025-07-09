@@ -36,7 +36,7 @@ public class HolidaySearchCondition {
     private LocalDate endDate;
 
     @Schema(description = "현지명 (포함 검색)",
-            example = "신정",
+            example = "새해",
             maxLength = 200)
     @Size(max = 200, message = "현지명은 200자를 초과할 수 없습니다")
     private String localName;
